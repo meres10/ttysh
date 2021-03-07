@@ -1,0 +1,198 @@
+.TH TTYSH 8 "24 Sept 2010" "TTYSH 1.1.4"
+.PP
+.SH "NAME"
+ttysh \- TTY based shell to connect your "terminal" machine to a 
+"server" machine using serial communication ports\&.
+.PP
+.SH "SYNOPSIS"
+.PP
+\fBttysh\fP serial-device [options]
+.PP
+.SH "DESCRIPTION"
+.PP
+This program addresses a simple problem:
+.PP
+\fIOne tries to log in a Linux box using terminal emulation but
+curses based and other terminal applications produce a good load 
+of mess on the screen. Panik striken - one tries to escape the 
+application by pressing Fxx function keys. A lot more of mess - 
+including irreversible data loss...\fP
+.PP
+We know that experts can solve this problem within the hour,
+but I'D LIKE TO USE MC HERE AND NOW!
+.PP
+The best way is not using terminal emulation at all. Here's
+the tool for this. It does nothing just put stdin/stdout/ttySx
+devices into raw-binary mode, and pass all the way in data to the
+other sides. There are no MODEM connect/hangup/dial, nor TERM
+maintenance.
+.PP
+Although if one knows the AT commands, it is easy to chit/chat with
+the MODEM by using this tool.
+
+.PP
+Note that Windows port of ttysh introduces the feeling of a
+really dumb terminal connecting to a Linux system.
+Although it is a quite useful tool for diagnostic purposes.
+
+.PP
+.SH "REQUIREMENTS"
+.PP
+.TP
+\fBAt the "terminal" side - where ttysh runs\fR
+.br
+ o - one free serial port (e.g. /dev/ttyS1 on Linux, \\\\.\\com1 on Windows)
+ o - operable - no getty, mgetty, mice or others on it (check out /etc/inittab).
+ o - the default TERM setting for the console - typically "\fBlinux\fP" - will do.
+.br
+.TP
+\fBAt the "server" side - just for a login prompt\fR
+.br
+ o - a serial port (e.g. /dev/ttyS1) hanging on getty/mgetty or similar.
+.TP
+Check out \fB/etc/inittab\fP for something like this:
+.br
+ o # Example how to put a getty
+ o # on a serial line (for a terminal)
+ o #
+ o #T0:23:respawn:/sbin/getty -L ttyS0 9600 vt100
+ o T1:23:respawn:/sbin/getty -h -L ttyS1 115200
+.br
+.TP
+Do not forget to \fBreboot\fP before giving a try...
+.br
+ o - when you are in - check/set the \fBTERM\fP variable. It MUST be the same as
+your local settings - regardless whatever it is. e.g.
+.br
+ o TERM=linux; export TERM
+ o stty rows 34
+.br
+.PP
+The example above shows some cosmetics on the number of
+lines to be used - since the metric of the local and remote
+console can be different. (refer /etc/lilo.conf - vga=xxxx lines)
+.br
+.PP
+In case of Windows OS, one has to try manaual escape sequences.
+(ESC 0 to quit MC)
+.br
+.PP
+.PP
+.SH "OPTIONS"
+.PP
+.TP
+\fBserial-device\fR The name of the serial port as seen by the
+given operating system. Some examples:
+.br
+ o /dev/ttyS0 - Linux, standard RS232 serial port 1 on the PC
+ o \\.\com1   - Windows, standard RS232 serial port 1 on the PC
+ o /dev/ttyS1 - Linux, standard RS232 serial port 2 on the PC
+ o \\.\com2   - Windows, standard RS232 serial port 1 on the PC
+ o /dev/ttyACM0 - Linux, RS232 emulation for USB communication device
+ o \\.\com7   - Windows, RS232 emulation for USB communication device
+.br
+Note that ACM stands for Abstract Control Model for
+serial emulation class controllers in Communication Device Class 
+(CDC).
+.TP
+\fB-e, -E, --escape <key>\fR where the key can be one of the
+following: \fBcQ\fP, \fBcX\fP, \fBcs2\fP, \fBcA\fP, \fBcB\fP, 
+\fBcF\fP, \fBcG\fP, \fBcK\fP, \fBcL\fP, and \fBcR\fP.
+If specified, this parameter modifies the escape charater.
+Once you are in - sooner or later - you might leave.
+TTYSH passes everything to the other side - CTR+C, CTR+Z, etc..
+except the escape character - \fBcQ\fP (CTRL+Q) by deafult - that 
+will terminate TTYSH normally.
+.TP
+\fB-n, -N, --num <num>\fR Same as -e except that the escape 
+character can be spefied in numeric format. e.g. 0x11 or 17 can be given for
+CTRL+Q.
+.TP
+\fB-d, -D, --dtrflow\fR use DTR/DSR hardware flow control
+.TP
+\fB-r, -R, --rtsflow\fR use RTS/CTS hardware flow control
+.TP
+\fB--dtrstat <num>\fR Set DTR state 0/1
+.TP
+\fB--rtsstat <num>\fR Set RTS state 0/1
+.TP
+\fB-b, -B, --break\fR Send break until a key is pressed
+.TP
+\fB-s, -S, --speed <key>\fR Sets the port speed to the given 
+baud-rate. Supported values are: 110, 300, 600, 1200, 2400, 
+4800, 9600, 19200, 38400, 57600, and 115200.
+.TP
+\fB-p, -P, --parity <key>\fR Sets the parity to none, even, 
+or odd.
+.TP
+\fB-t, -T, --stop <key>\fR Sets the stop bits to one or two.
+.TP
+\fB-i, -I, --ipipe\fR Specifies the local input as piped. (Linux port)
+It can be used for simple file-transfers. e.g. bring up a vi
+at the remote side in input mode, escape ttysh and at the local 
+prompt issue
+.RS
+.sp
+.nf
+.ne 2
+ttysh /dev/tyyS0 -i < myfile.c
+.fi
+.sp
+.RE
+Get back to remote, and save your work in vi. Yes, you get back
+and force with ttysh - the only scrap is that remote screen will
+never be refreshed automatically.
+.RS
+.sp
+.nf
+.ne 2
+ttysh /dev/tyyS0
+ESC:w myfile.c
+.fi
+.sp
+.RE
+.TP
+\fB-o, -O, --opipe\fR Specifies the local output as piped. (Linux port)
+Hmmm... It is not really intended for logging sessions - use -c 
+(local capture) instead - except you prefer blinded sessions.
+.TP
+\fB-c, -C <path>\fR Capture the session to local file.
+Note that upstream will not be captured - because the remote side
+echoes back everything we typed in - in most cases.
+.TP
+\fB-b, -B, --bypass\fR Bypass errors - straigth ahead. (Linux port)
+.TP
+\fB-w, -W <strg>\fR Write this string, wait answer and exit (Windows port)
+.TP
+\fB--version\fR Show the version and exit
+.TP
+\fB-h, -H, --help\fR  Help and exit
+
+.PP
+.SH "FILES"
+.PP
+none
+.PP
+.PP
+.SH "SIGNALS"
+.PP
+To shut down a stucked \fBttysh\fP Linux process it is OK to SIGKILL (-9).
+Although the correct way to terminate \fBttysh\fP is to send it a 
+\fISIGTERM\fP or \fISIGQUIT\fP signal and wait
+for it to die on its own\&.
+.PP
+On Windows OS use CTRL+ALT+DEL, and the task manager to kill ttysh.
+.PP
+.PP
+.SH "VERSION"
+.PP
+This man page is correct for version 1\&.1\&.4 of the ttysh\&.
+.PP
+.SH "SEE ALSO"
+.PP
+\fB - \fP
+.PP
+.SH "AUTHOR"
+.PP
+The ttysh software was created
+by Gyorgy Horvath \fIhorvaath@tmit\&.bme\&.hu\fP\&.

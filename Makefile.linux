@@ -1,0 +1,37 @@
+#
+# Makefile
+#
+# This is the Makefile for TTYSH Linux port
+#
+AR=ar
+ARFLAGS=rc
+RANLIB=ranlib
+CC=gcc
+CFLAGS=-O2 -Wall -s
+MV=mv
+RM=rm
+# The target directories
+SBIN_DIR   = /usr/sbin
+SHARE_DIR  = /usr/share
+MAN_DIR8   = /usr/share/man/man8
+#
+TARGETS=ttysh
+
+all: $(TARGETS)
+
+ttysh: ttysh.c
+	$(CC) $(CFLAGS) $^ options.c -o $@ 
+
+install: $(TARGETS)
+	cp -f $(TARGETS) $(SBIN_DIR) ; \
+	cp -f ttysh.8  $(MAN_DIR8) ; \
+
+remove:
+	rm -f $(SBIN_DIR)/ttysh ; \
+	rm -f $(MAN_DIR8)/ttysh.8 ; \
+
+clean:
+	@$(RM) -f $(TARGETS) *.o *.bak
+
+fullclean: clean
+

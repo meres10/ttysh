@@ -1,0 +1,29 @@
+#
+# Makefile
+#
+# This is the Makefile for TTYSH Windows port
+#
+
+AR=ar
+ARFLAGS=rc
+RANLIB=ranlib
+CC=gcc
+CFLAGS=-O2 -Wall -s
+MV=mv
+RM=rm
+
+TARGETS=ttysh.exe
+
+all: $(TARGETS)
+
+ttysh.exe: ttysh.c
+	$(CC) $(CFLAGS) $^ options.c -o $@ 
+
+install: $(TARGETS)
+	cp -f $(TARGETS) /c/windows
+
+clean:
+	@$(RM) -f *.exe *.o *.bak *.res
+
+fullclean: clean
+
